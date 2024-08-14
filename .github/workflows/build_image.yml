@@ -40,7 +40,7 @@ jobs:
                 context: .
                 file: ubuntu-images/ubuntu22_dockerfile
                 push: true
-                tags: ${{ secrets.DOCKERHUB_USERNAME }}/base_images:ubuntu:22
+                tags: ${{ secrets.DOCKERHUB_USERNAME }}/base_images:ubuntu22
 
     
 
