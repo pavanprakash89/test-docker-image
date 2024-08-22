@@ -28,7 +28,7 @@ jobs:
       - name: Echo matrix outputs
         run: |
           echo "Matrix outputs:"
-          echo '${{ toJSON(needs.changes.outputs) }}'
+          echo '${{ toJson(needs.changes.outputs) }}'
 
   build:
     needs: changes
