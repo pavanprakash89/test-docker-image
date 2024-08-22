@@ -20,9 +20,15 @@ jobs:
             ubuntu24: 'ubuntu-images/ubuntu24_dockerfile'
             centos7: 'centos-images/centos7_dockerfile'
             centos8: 'centos-images/centos8_dockerfile'
-      - name: Echo Matrix
-        run: echo "Matrix output ${{ outputs.matrix }}"
 
+  echo_matrix:
+    needs: changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo matrix outputs
+        run: |
+          echo "Matrix outputs:"
+          echo '${{ toJSON(needs.changes.outputs) }}'
 
   build:
     needs: changes
