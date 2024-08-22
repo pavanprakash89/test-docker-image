@@ -15,8 +15,13 @@ jobs:
         id: filter
         with:
           filters: |
-            ubuntu: 'ubuntu-images/**'
-            centos: 'centos-images/**'
+            ubuntu20: 'ubuntu-images/ubuntu20_dockerfile'
+            ubuntu22: 'ubuntu-images/ubuntu22_dockerfile'
+            ubuntu24: 'ubuntu-images/ubuntu24_dockerfile'
+            centos7: 'centos-images/centos7_dockerfile'
+            centos8: 'centos-images/centos8_dockerfile'
+      - name: Echo Matrix
+        run: echo "Matrix output ${{ outputs.matrix }}"
 
 
   build:
