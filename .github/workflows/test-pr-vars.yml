@@ -16,6 +16,8 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - uses: dorny/paths-filter@v3
         id: filter
@@ -39,18 +41,20 @@ jobs:
               {image_type: "ci", os_type: "centos"}|select($changes["ci-centos"] == "true"),
               {image_type: "runner", os_type: "ubuntu"}|select($changes["runner-ubuntu"] == "true"),
               {image_type: "runner", os_type: "centos"}|select($changes["runner-centos"] == "true")
-            ] | map(select(.))
+            ] | map(select(.)) | if length == 0 then [{"image_type": "none", "os_type": "none"}] else . end
           }')
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
 
   build:
     needs: detect-changes
-    if: ${{ fromJson(needs.detect-changes.outputs.matrix).include[0] }}
+    if: ${{ fromJson(needs.detect-changes.outputs.matrix).include[0].image_type != 'none' }}
     runs-on: ubuntu-latest
     strategy:
       matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Get OS versions
         id: os_versions
