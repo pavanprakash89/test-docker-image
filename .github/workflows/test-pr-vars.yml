@@ -31,7 +31,23 @@ jobs:
 
       - id: set-matrix
         run: |
-          matrix=$(jq -n --argjson changes '${{ toJSON(steps.filter.outputs) }}' -f .github/workflows/matrix.jq)
+          changes='${{ toJSON(steps.filter.outputs) }}'
+          matrix=$(jq -n --argjson changes "$changes" '
+          {
+            include: [
+              {image_type: "base", os_type: "ubuntu"},
+              {image_type: "base", os_type: "centos"},
+              {image_type: "ci", os_type: "ubuntu"},
+              {image_type: "ci", os_type: "centos"},
+              {image_type: "runner", os_type: "ubuntu"},
+              {image_type: "runner", os_type: "centos"}
+            ] | map(select(
+              ($changes[.image_type + "-" + .os_type] == "true")
+            ))
+          }')
+          if [ "$(echo "$matrix" | jq '.include | length')" -eq "0" ]; then
+            matrix='{"include": [{"image_type": "none", "os_type": "none"}]}'
+          fi
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
 
   build:
