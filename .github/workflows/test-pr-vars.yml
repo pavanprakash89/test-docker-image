@@ -16,8 +16,6 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - uses: dorny/paths-filter@v3
         id: filter
@@ -33,16 +31,18 @@ jobs:
 
       - id: set-matrix
         run: |
-          matrix=$(jq -n --argjson changes '${{ toJSON(steps.filter.outputs) }}' '{
+          matrix=$(jq -n --argjson changes '${{ toJSON(steps.filter.outputs) }}' '
+          {
             include: [
-              {image_type: "base", os_type: "ubuntu"}|select($changes["base-ubuntu"] == "true"),
-              {image_type: "base", os_type: "centos"}|select($changes["base-centos"] == "true"),
-              {image_type: "ci", os_type: "ubuntu"}|select($changes["ci-ubuntu"] == "true"),
-              {image_type: "ci", os_type: "centos"}|select($changes["ci-centos"] == "true"),
-              {image_type: "runner", os_type: "ubuntu"}|select($changes["runner-ubuntu"] == "true"),
-              {image_type: "runner", os_type: "centos"}|select($changes["runner-centos"] == "true")
+              {image_type: "base", os_type: "ubuntu"} | select($changes["base-ubuntu"] == "true"),
+              {image_type: "base", os_type: "centos"} | select($changes["base-centos"] == "true"),
+              {image_type: "ci", os_type: "ubuntu"} | select($changes["ci-ubuntu"] == "true"),
+              {image_type: "ci", os_type: "centos"} | select($changes["ci-centos"] == "true"),
+              {image_type: "runner", os_type: "ubuntu"} | select($changes["runner-ubuntu"] == "true"),
+              {image_type: "runner", os_type: "centos"} | select($changes["runner-centos"] == "true")
             ] | map(select(.)) | if length == 0 then [{"image_type": "none", "os_type": "none"}] else . end
-          }')
+          }
+          ')
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
 
   build:
@@ -53,8 +53,6 @@ jobs:
       matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - name: Get OS versions
         id: os_versions
