@@ -24,10 +24,13 @@ jobs:
           filters: |
             base-ubuntu: base-images/ubuntu/*-dockerfile
             base-centos: base-images/centos/*-dockerfile
+            base-rhel: base-images/rhel/*-dockerfile
             ci-ubuntu: ci-images/ubuntu/*-dockerfile
             ci-centos: ci-images/centos/*-dockerfile
+            ci-rhel: ci-images/rhel/*-dockerfile
             runner-ubuntu: runner-images/ubuntu/*-dockerfile
             runner-centos: runner-images/centos/*-dockerfile
+            runner-rhel: runner-images/rhel/*-dockerfile
 
       - id: set-matrix
         run: |
@@ -44,6 +47,7 @@ jobs:
           if [ "$(echo "$matrix" | jq '.include | length')" -eq "0" ]; then
             matrix='{"include":[{"image_type":"none","os_type":"none"}]}'
           fi
+          echo "matrix=$matrix"
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
 
   build:
@@ -71,7 +75,9 @@ jobs:
             TAGS="$TAGS,$IMAGE_NAME:$VERSION-$TIMESTAMP"
           done
           TAGS=${TAGS:1}  # Remove leading comma
+          echo "IMAGE_NAME=$IMAGE_NAME"
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_OUTPUT
+          echo "IMAGE_TAGS=$TAGS"
           echo "IMAGE_TAGS=$TAGS" >> $GITHUB_OUTPUT
 
       - name: Build Docker images
