@@ -31,24 +31,24 @@ jobs:
             base-rhel7: base-images/rhel/rhel7-dockerfile
             base-rhel8: base-images/rhel/rhel8-dockerfile
             base-rhel9: base-images/rhel/rhel9-dockerfile
-            ci-ubuntu18: ci-images/ubuntu/ubuntu18-dockerfile
-            ci-ubuntu20: ci-images/ubuntu/ubuntu20-dockerfile
-            ci-ubuntu22: ci-images/ubuntu/ubuntu22-dockerfile
-            ci-ubuntu24: ci-images/ubuntu/ubuntu24-dockerfile
-            ci-centos7: ci-images/centos/centos7-dockerfile
-            ci-centos8: ci-images/centos/centos8-dockerfile
-            ci-rhel7: ci-images/rhel/rhel7-dockerfile
-            ci-rhel8: ci-images/rhel/rhel8-dockerfile
-            ci-rhel9: ci-images/rhel/rhel9-dockerfile
-            runner-ubuntu18: runner-images/ubuntu/ubuntu18-dockerfile
-            runner-ubuntu20: runner-images/ubuntu/ubuntu20-dockerfile
-            runner-ubuntu22: runner-images/ubuntu/ubuntu22-dockerfile
-            runner-ubuntu24: runner-images/ubuntu/ubuntu24-dockerfile
-            runner-centos7: runner-images/centos/centos7-dockerfile
-            runner-centos8: runner-images/centos/centos8-dockerfile
-            runner-rhel7: runnerimages/rhel/rhel7-dockerfile
-            runner-rhel8: runner-images/rhel/rhel8-dockerfile
-            runner-rhel9: runner-images/rhel/rhel9-dockerfile
+            ci-ubuntu18: ci-images/ubuntu/ubuntu18-ci-dockerfile
+            ci-ubuntu20: ci-images/ubuntu/ubuntu20-ci-dockerfile
+            ci-ubuntu22: ci-images/ubuntu/ubuntu22-ci-dockerfile
+            ci-ubuntu24: ci-images/ubuntu/ubuntu24-ci-dockerfile
+            ci-centos7: ci-images/centos/centos7-ci-dockerfile
+            ci-centos8: ci-images/centos/centos8-ci-dockerfile
+            ci-rhel7: ci-images/rhel/rhel7-ci-dockerfile
+            ci-rhel8: ci-images/rhel/rhel8-ci-dockerfile
+            ci-rhel9: ci-images/rhel/rhel9-ci-dockerfile
+            runner-ubuntu18: runner-images/ubuntu/ubuntu18-runner-dockerfile
+            runner-ubuntu20: runner-images/ubuntu/ubuntu20-runner-dockerfile
+            runner-ubuntu22: runner-images/ubuntu/ubuntu22-runner-dockerfile
+            runner-ubuntu24: runner-images/ubuntu/ubuntu24-runner-dockerfile
+            runner-centos7: runner-images/centos/centos7-runner-dockerfile
+            runner-centos8: runner-images/centos/centos8-runner-dockerfile
+            runner-rhel7: runnerimages/rhel/rhel7-runner-dockerfile
+            runner-rhel8: runner-images/rhel/rhel8-runner-dockerfile
+            runner-rhel9: runner-images/rhel/rhel9-runner-dockerfile
 
       - id: set-matrix
         run: |
@@ -82,6 +82,7 @@ jobs:
               {image_type: "runner", os_type: "rhel", version: "9"}|select($changes["runner-rhel9"] == "true")
             ] | map(select(.))
           }')
+          echo "matrix=$matrix"
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
 
   build:
@@ -99,7 +100,9 @@ jobs:
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           IMAGE_NAME="myorg/${{ matrix.image_type }}-${{ matrix.os_type }}${{ matrix.version }}"
           TAG="${IMAGE_NAME}:${TIMESTAMP}"
+          echo "IMAGE_NAME=$IMAGE_NAME"
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_OUTPUT
+          echo "TAG=$TAG"
           echo "TAG=$TAG" >> $GITHUB_OUTPUT
 
       - name: Build Docker image
