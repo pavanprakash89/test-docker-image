@@ -55,8 +55,16 @@ jobs:
           MATRIX=""
           for change in $(echo '${{ toJSON(steps.filter.outputs) }}' | jq -r 'to_entries | .[] | select(.value == "true") | .key'); do
             IFS='-' read -r image_type os_type <<< "$change"
-            version="${os_type: -2}"
-            os_type="${os_type%?*}"
+            if [[ "$os_type" == "rhel"* ]]; then
+              version="${os_type:4}"
+              os_type="rhel"
+            elif [[ "$os_type" == "ubuntu"* || "$os_type" == "centos"* ]]; then
+              version="${os_type:6}"
+              os_type="${os_type:0:6}"
+            else
+              echo "Unknown OS type: $os_type"
+              continue
+            fi
             MATRIX="${MATRIX}{\"image_type\":\"$image_type\",\"os_type\":\"$os_type\",\"version\":\"$version\"},"
           done
           MATRIX="[${MATRIX%,}]"
