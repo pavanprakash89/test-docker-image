@@ -52,41 +52,16 @@ jobs:
 
       - id: set-matrix
         run: |
-          matrix=$(jq -n --argjson changes '${{ toJSON(steps.filter.outputs) }}' '{
-            include: [
-              {image_type: "base", os_type: "ubuntu", version: "18"}|select($changes["base-ubuntu18"] == "true"),
-              {image_type: "base", os_type: "ubuntu", version: "20"}|select($changes["base-ubuntu20"] == "true"),
-              {image_type: "base", os_type: "ubuntu", version: "22"}|select($changes["base-ubuntu22"] == "true"),
-              {image_type: "base", os_type: "ubuntu", version: "24"}|select($changes["base-ubuntu24"] == "true"),
-              {image_type: "base", os_type: "centos", version: "7"}|select($changes["base-centos7"] == "true"),
-              {image_type: "base", os_type: "centos", version: "8"}|select($changes["base-centos8"] == "true"),
-              {image_type: "base", os_type: "rhel", version: "7"}|select($changes["base-rhel7"] == "true"),
-              {image_type: "base", os_type: "rhel", version: "8"}|select($changes["base-rhel8"] == "true"),
-              {image_type: "base", os_type: "rhel", version: "9"}|select($changes["base-rhel9"] == "true"),
-              {image_type: "ci", os_type: "ubuntu", version: "18"}|select($changes["ci-ubuntu18"] == "true"),
-              {image_type: "ci", os_type: "ubuntu", version: "20"}|select($changes["ci-ubuntu20"] == "true"),
-              {image_type: "ci", os_type: "ubuntu", version: "22"}|select($changes["ci-ubuntu22"] == "true"),
-              {image_type: "ci", os_type: "ubuntu", version: "24"}|select($changes["ci-ubuntu24"] == "true"),
-              {image_type: "ci", os_type: "centos", version: "7"}|select($changes["ci-centos7"] == "true"),
-              {image_type: "ci", os_type: "centos", version: "8"}|select($changes["ci-centos8"] == "true"),
-              {image_type: "ci", os_type: "rhel", version: "7"}|select($changes["ci-rhel7"] == "true"),
-              {image_type: "ci", os_type: "rhel", version: "8"}|select($changes["ci-rhel8"] == "true"),
-              {image_type: "ci", os_type: "rhel", version: "9"}|select($changes["ci-rhel9"] == "true"),
-              {image_type: "runner", os_type: "ubuntu", version: "18"}|select($changes["runner-ubuntu18"] == "true"),
-              {image_type: "runner", os_type: "ubuntu", version: "20"}|select($changes["runner-ubuntu20"] == "true"),
-              {image_type: "runner", os_type: "ubuntu", version: "22"}|select($changes["runner-ubuntu22"] == "true"),
-              {image_type: "runner", os_type: "centos", version: "7"}|select($changes["runner-centos7"] == "true"),
-              {image_type: "runner", os_type: "centos", version: "8"}|select($changes["runner-centos8"] == "true"),
-              {image_type: "runner", os_type: "rhel", version: "7"}|select($changes["runner-rhel7"] == "true"),
-              {image_type: "runner", os_type: "rhel", version: "8"}|select($changes["runner-rhel8"] == "true"),
-              {image_type: "runner", os_type: "rhel", version: "9"}|select($changes["runner-rhel9"] == "true")
-            ] | map(select(.))
-          }')
-          if [ "$(echo "$matrix" | jq '.include | length')" -eq "0" ]; then
-            matrix='{"include":[{"image_type":"none","os_type":"none"}]}'
-          fi
-          echo "matrix=$matrix"
-          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+          MATRIX=""
+          for change in $(echo '${{ toJSON(steps.filter.outputs) }}' | jq -r 'to_entries | .[] | select(.value == "true") | .key'); do
+            IFS='-' read -r image_type os_type <<< "$change"
+            version="${os_type: -2}"
+            os_type="${os_type%?*}"
+            MATRIX="${MATRIX}{\"image_type\":\"$image_type\",\"os_type\":\"$os_type\",\"version\":\"$version\"},"
+          done
+          MATRIX="[${MATRIX%,}]"
+          echo "matrix={\"include\":$MATRIX}"
+          echo "matrix={\"include\":$MATRIX}" >> $GITHUB_OUTPUT
 
   build:
     needs: detect-changes
