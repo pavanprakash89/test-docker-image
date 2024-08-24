@@ -95,7 +95,7 @@ jobs:
         run: |
           echo "Building Docker image: ${{ steps.docker_vars.outputs.TAG }}"
           echo "Dockerfile: ${{ matrix.image_type }}-images/${{ matrix.os_type }}/${{ matrix.os_type }}${{ matrix.version }}-dockerfile"
-          docker build -t ${{ steps.docker_vars.outputs.TAG }} \
-            -f ${{ matrix.image_type }}-images/${{ matrix.os_type }}/${{ matrix.os_type }}${{ matrix.version }}-dockerfile .
+          #docker build -t ${{ steps.docker_vars.outputs.TAG }} \
+          #  -f ${{ matrix.image_type }}-images/${{ matrix.os_type }}/${{ matrix.os_type }}${{ matrix.version }}-dockerfile .
 
       # Add more steps as needed, such as pushing the images to a registry
