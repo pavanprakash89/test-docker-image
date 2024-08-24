@@ -82,6 +82,9 @@ jobs:
               {image_type: "runner", os_type: "rhel", version: "9"}|select($changes["runner-rhel9"] == "true")
             ] | map(select(.))
           }')
+          if [ "$(echo "$matrix" | jq '.include | length')" -eq "0" ]; then
+            matrix='{"include":[{"image_type":"none","os_type":"none"}]}'
+          fi
           echo "matrix=$matrix"
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
 
