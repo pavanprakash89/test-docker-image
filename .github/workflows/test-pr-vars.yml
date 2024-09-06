@@ -49,7 +49,7 @@ jobs:
             runner-rhel7: runnerimages/rhel/rhel7-runner-dockerfile
             runner-rhel8: runner-images/rhel/rhel8-runner-dockerfile
             runner-rhel9: runner-images/rhel/rhel9-runner-dockerfile
-            allChanges:
+            addedOrModified:
               - added|modified: '**'
 
       - id: set-matrix

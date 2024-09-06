@@ -1,0 +1,90 @@
+name: Build only when file is added or modified 
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, test-pr-action]
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      changes_detected: ${{ steps.set-matrix.outputs.changes_detected }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          filters: |
+            allChanges:
+              - added|modified: '**/*-dockerfile'
+
+      - id: set-matrix
+        run: |
+          if [[ "${{ steps.filter.outputs.allChanges }}" == "true" ]]; then
+            echo "changes_detected=true" >> $GITHUB_OUTPUT
+            CHANGES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E '.*-dockerfile$' || true)
+            MATRIX=""
+            while IFS= read -r file; do
+              if [[ -n "$file" ]]; then
+                dir=$(dirname "$file")
+                filename=$(basename "$file")
+                image_type=$(echo "$dir" | cut -d'/' -f1 | sed 's/-images//')
+                os_type=$(echo "$dir" | cut -d'/' -f2)
+                version=$(echo "$filename" | sed -E 's/.*([0-9]+)-dockerfile/\1/')
+                MATRIX="${MATRIX}{\"image_type\":\"$image_type\",\"os_type\":\"$os_type\",\"version\":\"$version\"},"
+              fi
+            done <<< "$CHANGES"
+            MATRIX="[${MATRIX%,}]"
+            echo "matrix={\"include\":$MATRIX}"
+            echo "matrix={\"include\":$MATRIX}" >> $GITHUB_OUTPUT
+          else
+            echo "changes_detected=false"
+            echo "changes_detected=false" >> $GITHUB_OUTPUT
+            echo "matrix={\"include\":[]}"
+            echo "matrix={\"include\":[]}" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.changes_detected == 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Generate Docker image variables
+        id: docker_vars
+        run: |
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          IMAGE_NAME="myorg/${{ matrix.image_type }}-${{ matrix.os_type }}${{ matrix.version }}"
+          TAG="${IMAGE_NAME}:${TIMESTAMP}"
+          echo "IMAGE_NAME=$IMAGE_NAME"
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_OUTPUT
+          echo "TAG=$TAG"
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Build Docker image
+        run: |
+          echo "Building Docker image: ${{ steps.docker_vars.outputs.TAG }}"
+          echo "Dockerfile: ${{ matrix.image_type }}-images/${{ matrix.os_type }}/${{ matrix.os_type }}${{ matrix.version }}-dockerfile"
+          #docker build -t ${{ steps.docker_vars.outputs.TAG }} \
+          #  -f ${{ matrix.image_type }}-images/${{ matrix.os_type }}/${{ matrix.os_type }}${{ matrix.version }}-dockerfile .
+
+      # Add more steps as needed, such as pushing the images to a registry
+
+  no-changes:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.changes_detected == 'false' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: No changes detected
+        run: echo "No relevant changes detected or only deletions occurred. Skipping build."
