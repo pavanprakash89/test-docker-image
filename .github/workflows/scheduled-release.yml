@@ -52,6 +52,7 @@ jobs:
         with:
           tag_name: ${{ steps.generate_version.outputs.NEW_VERSION }}
           release_name: Release ${{ steps.generate_version.outputs.NEW_VERSION }}
+          body: "Weekly rolling release"
           draft: false
           prerelease: false
 
