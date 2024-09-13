@@ -37,6 +37,7 @@ jobs:
             new_patch=$((version_parts[2] + 1))
             new_version="${version_parts[0]}.${version_parts[1]}.$new_patch"
           fi
+          echo "NEW_VERSION=v$new_version"
           echo "NEW_VERSION=v$new_version" >> $GITHUB_OUTPUT
         env:
           LATEST_TAG: ${{ steps.get_latest_tag.outputs.LATEST_TAG }}
@@ -45,7 +46,7 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.generate_version.outputs.NEW_VERSION }}
           release_name: Release ${{ steps.generate_version.outputs.NEW_VERSION }}
