@@ -47,14 +47,15 @@ jobs:
       - name: Create Release
         id: create_release
         uses: ncipollo/release-action@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # env:
+        #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.generate_version.outputs.NEW_VERSION }}
           release_name: Release ${{ steps.generate_version.outputs.NEW_VERSION }}
           body: "Weekly rolling release"
           draft: false
           prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
 
     #   - name: Build and push Docker image
     #     uses: docker/build-push-action@v4
