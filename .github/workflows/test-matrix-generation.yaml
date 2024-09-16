@@ -37,15 +37,8 @@ jobs:
               OS_VERSION=$(echo $FILENAME | grep -o '[0-9]\+')
               REGISTRY_PATH="${IMAGE_TYPE}/${OS_TYPE}/${OS_VERSION}"
               
-              jq -n \
-                --arg image_type "$IMAGE_TYPE" \
-                --arg os_type "$OS_TYPE" \
-                --arg os_version "$OS_VERSION" \
-                --arg registry_path "$REGISTRY_PATH" \
-                --arg dockerfile "$DOCKERFILE" \
-                '{image_type: $image_type, os_type: $os_type, os_version: $os_version, registry_path: $registry_path, dockerfile: $dockerfile}'
+              echo "{\"image_type\":\"$IMAGE_TYPE\",\"os_type\":\"$OS_TYPE\",\"os_version\":\"$OS_VERSION\",\"registry_path\":\"$REGISTRY_PATH\",\"dockerfile\":\"$DOCKERFILE\"}"
             fi
-          done | jq -s '{ "include": . }')
-
+          done | jq -s '{ "include": . }' | jq -c .)
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
           echo "matrix=$MATRIX" 
