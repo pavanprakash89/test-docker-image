@@ -98,7 +98,7 @@ jobs:
         - name: Build Docker image
           run: |
             echo "Building Docker image: ${{ steps.generate_version.outputs.NEW_VERSION }}"
-            echo "Dockerfile: ${{ needs.generate-matrix.outputs.matrix.dockerfile }}
+            echo "Dockerfile: ${{ needs.generate-matrix.outputs.matrix.dockerfile }}"
 
     #   - name: Build and push Docker image
     #     uses: docker/build-push-action@v4
