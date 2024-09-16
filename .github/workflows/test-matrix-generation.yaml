@@ -42,3 +42,68 @@ jobs:
           done | jq -s '{ "include": . }' | jq -c .)
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
           echo "matrix=$MATRIX" 
+
+    create-release:
+      needs: [check-branch, generate-matrix]
+      if: needs.check-branch.outputs.is_main == 'true'
+      runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get latest tag
+        id: get_latest_tag
+        run: |
+          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "LATEST_TAG=$latest_tag"
+          echo "LATEST_TAG=$latest_tag" >> $GITHUB_OUTPUT
+
+      - name: Generate new version
+        id: generate_version
+        run: |
+          if [ '${{ github.event.inputs.version }}' != 'auto' ]; then
+            new_version='${{ github.event.inputs.version }}'
+          else
+            latest_version=${LATEST_TAG#v}
+            IFS='.' read -ra version_parts <<< "$latest_version"
+            new_patch=$((version_parts[2] + 1))
+            new_version="${version_parts[0]}.${version_parts[1]}.$new_patch"
+          fi
+          echo "NEW_VERSION=v$new_version"
+          echo "NEW_VERSION=v$new_version" >> $GITHUB_OUTPUT
+        env:
+          LATEST_TAG: ${{ steps.get_latest_tag.outputs.LATEST_TAG }}
+
+      - name: Create Release
+        id: create_release
+        uses: comnoco/create-release-action@v2.0.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.generate_version.outputs.NEW_VERSION }}
+          release_name: Release ${{ steps.generate_version.outputs.NEW_VERSION }}
+          body: "Weekly rolling release"
+          draft: false
+          prerelease: false
+
+      - name: Build Docker image
+        run: |
+          echo "Building Docker image: ${{ steps.generate_version.outputs.NEW_VERSION }}"
+          echo "Dockerfile: ${{ needs.generate-matrix.outputs.matrix.dockerfile }}
+
+    #   - name: Build and push Docker image
+    #     uses: docker/build-push-action@v4
+    #     with:
+    #       push: true
+    #       tags: |
+    #         your-registry/your-image:${{ steps.generate_version.outputs.NEW_VERSION }}
+    #         your-registry/your-image:latest
+
+      - name: Deploy
+        run: |
+          # Add your deployment steps here
+          echo "Deploying version ${{ steps.generate_version.outputs.NEW_VERSION }}"
