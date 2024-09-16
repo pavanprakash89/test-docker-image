@@ -11,6 +11,36 @@ on:
         default: 'auto'
 
 jobs:
+  image-files:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.filter.outputs.image-files }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            ubuntu18: 'base-images/ubuntu/ubuntu18-dockerfile'
+            ubuntu20: 'base-images/ubuntu/ubuntu20-dockerfile'
+            ubuntu22: 'base-images/ubuntu/ubuntu22-dockerfile'
+            ubuntu24: 'base-images/ubuntu/ubuntu24-dockerfile'
+            centos7: 'base-images/centos/centos7-dockerfile'
+            centos8: 'base-images/centos/centos8-dockerfile'
+            rhel7: 'base-images/rhel/rhel7-dockerfile'
+            rhel8: 'base-images/rhel/rhel8-dockerfile'
+            rhel9: 'base-images/rhel/rhel9-dockerfile'
+            ubuntu18-ci: 'ci-images/ubuntu/ubuntu18-ci-dockerfile'
+            ubuntu20-ci: 'ci-images/ubuntu/ubuntu20-ci-dockerfile'
+            ubuntu22-ci: 'ci-images/ubuntu/ubuntu22-ci-dockerfile'
+            ubuntu24-ci: 'ci-images/ubuntu/ubuntu24-ci-dockerfile'
+            centos7-ci: 'ci-images/centos/centos7-ci-dockerfile'
+            centos8-ci: 'ci-images/centos/centos8-ci-dockerfile'
+            rhel7-ci: 'ci-images/rhel/rhel7-ci-dockerfile'
+            rhel8-ci: 'ci-images/rhel/rhel8-ci-dockerfile'
+            rhel9-ci: 'ci-images/rhel/rhel9-ci-dockerfile'
+
+
   create-release:
     runs-on: ubuntu-latest
     permissions:
