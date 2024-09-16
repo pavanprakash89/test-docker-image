@@ -95,9 +95,17 @@ jobs:
             draft: false
             prerelease: false
 
+  build-and-push:
+    needs: [check-branch, generate-matrix, create-release]
+    if: needs.check-branch.outputs.is_main == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{fromJson(needs.generate-matrix.outputs.matrix)}}
+      fail-fast: false
+    steps:
         - name: Build Docker image
           run: |
-            echo "Building Docker image: ${{ steps.generate_version.outputs.NEW_VERSION }}"
+            echo "Building Docker image: ${{ needs.create_release.generate_version.outputs.NEW_VERSION }}"
             echo "Dockerfile: ${{ needs.generate-matrix.outputs.matrix.dockerfile }}"
 
     #   - name: Build and push Docker image
@@ -111,4 +119,4 @@ jobs:
         - name: Deploy
           run: |
             # Add your deployment steps here
-            echo "Deploying version ${{ steps.generate_version.outputs.NEW_VERSION }}"
+            echo "Deploying version ${{ needs.create_release.generate_version.outputs.NEW_VERSION }}"
