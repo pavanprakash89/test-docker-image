@@ -43,7 +43,7 @@ jobs:
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
           echo "matrix=$MATRIX" 
 
-    create-release:
+  create-release:
       needs: [check-branch, generate-matrix]
       if: needs.check-branch.outputs.is_main == 'true'
       runs-on: ubuntu-latest
