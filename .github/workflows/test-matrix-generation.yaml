@@ -52,6 +52,8 @@ jobs:
       needs: [check-branch, generate-matrix]
       if: needs.check-branch.outputs.is_main == 'true'
       runs-on: ubuntu-latest
+      outputs:
+        new_version: ${{ steps.generate_version.outputs.NEW_VERSION}}
       permissions:
         contents: write
       steps:
@@ -105,7 +107,7 @@ jobs:
     steps:
         - name: Build Docker image
           run: |
-            echo "Building Docker image: ${{ needs.create-release.generate_version.outputs.NEW_VERSION }}"
+            echo "Building Docker image: ${{ needs.create-release.outputs.new_version }}"
             echo "Dockerfile: ${{ needs.generate-matrix.outputs.matrix.dockerfile }}"
 
     #   - name: Build and push Docker image
@@ -119,4 +121,4 @@ jobs:
         - name: Deploy
           run: |
             # Add your deployment steps here
-            echo "Deploying version ${{ needs.create-release.generate_version.outputs.NEW_VERSION }}"
+            echo "Deploying version ${{ needs.create-release.outputs.new_version }}"
