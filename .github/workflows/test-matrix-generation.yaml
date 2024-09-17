@@ -105,7 +105,7 @@ jobs:
     steps:
         - name: Build Docker image
           run: |
-            echo "Building Docker image: ${{ needs.create_release.generate_version.outputs.NEW_VERSION }}"
+            echo "Building Docker image: ${{ needs.create-release.generate_version.outputs.NEW_VERSION }}"
             echo "Dockerfile: ${{ needs.generate-matrix.outputs.matrix.dockerfile }}"
 
     #   - name: Build and push Docker image
@@ -119,4 +119,4 @@ jobs:
         - name: Deploy
           run: |
             # Add your deployment steps here
-            echo "Deploying version ${{ needs.create_release.generate_version.outputs.NEW_VERSION }}"
+            echo "Deploying version ${{ needs.create-release.generate_version.outputs.NEW_VERSION }}"
