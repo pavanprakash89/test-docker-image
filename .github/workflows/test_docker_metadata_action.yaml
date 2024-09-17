@@ -28,9 +28,7 @@ jobs:
                 images: ${{ secrets.DOCKERHUB_USERNAME }}/base_images
                 tags: |
                   type=raw, value=ubuntu22
-                  if ${{ github.event.inputs.version }} 
-                    type=semver,pattern={{version}},value=${{ github.event.inputs.version }}
-                  end
+                  type=semver,pattern={{version}},value=${{ github.event.inputs.version }},enable=${{ github.event.inputs.version != '' }}
 
 
             - name: Build and push
