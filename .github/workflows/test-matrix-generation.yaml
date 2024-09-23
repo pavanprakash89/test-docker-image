@@ -112,6 +112,21 @@ jobs:
           env:
             NEW_VERSION: ${{ needs.create-release.outputs.new_version }}
             DOCKERFILE: ${{ matrix.dockerfile }}
+        
+        - name: lint-dockerfile
+          uses: actions-ext/hadolint-action@v3.1.0
+          with:
+            Dockerfile: ${{ env.DOCKERFILE }} 
+            failure-threshold: warning
+            no-fail: true
+            override-info: DL3008,DL3009,DL3015,DL3059
+            override-warning: DL3003,DL3045
+            format: json
+            output-file: hadolint-${{ env.OS_TYPE }}-${{ github.sha }}.json
+          env:
+            NEW_VERSION: ${{ needs.create-release.outputs.new_version }}
+            DOCKERFILE: ${{ matrix.dockerfile }}
+            OS_TYPE: ${{ matrix.os_type }}
 
     #   - name: Build and push Docker image
     #     uses: docker/build-push-action@v4
