@@ -41,7 +41,7 @@ jobs:
               FILENAME=$(basename $DOCKERFILE)
               OS_VERSION=$(echo $FILENAME | grep -o '[0-9]\+')
               REGISTRY_PATH="${IMAGE_TYPE}/${OS_TYPE}/${OS_VERSION}"
-              DOCKERFILE="${DOCKERFILE#./}"
+              #DOCKERFILE="${DOCKERFILE#./}"
               
               echo "{\"image_type\":\"$IMAGE_TYPE\",\"os_type\":\"$OS_TYPE\",\"os_version\":\"$OS_VERSION\",\"registry_path\":\"$REGISTRY_PATH\",\"dockerfile\":\"$DOCKERFILE\"}"
             fi
