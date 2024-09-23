@@ -111,7 +111,7 @@ jobs:
             echo "Dockerfile: ${DOCKERFILE}"
           env:
             NEW_VERSION: ${{ needs.create-release.outputs.new_version }}
-            DOCKERFILE: ${{ needs.generate-matrix.outputs.matrix.dockerfile }}
+            DOCKERFILE: ${{ matrix.dockerfile }}
 
     #   - name: Build and push Docker image
     #     uses: docker/build-push-action@v4
