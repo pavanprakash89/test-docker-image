@@ -114,7 +114,7 @@ jobs:
             DOCKERFILE: ${{ matrix.dockerfile }}
         
         - name: lint-dockerfile
-          uses: actions-ext/hadolint-action@v3.1.0
+          uses: hadolint/hadolint-action@v3.1.0
           with:
             Dockerfile: ${{ env.DOCKERFILE }} 
             failure-threshold: warning
