@@ -113,6 +113,8 @@ jobs:
           env:
             NEW_VERSION: ${{ needs.create-release.outputs.new_version }}
             DOCKERFILE: ${{ matrix.dockerfile }}
+
+        - uses: actions/checkout@v3
         
         - name: lint-dockerfile
           uses: hadolint/hadolint-action@v3.1.0
