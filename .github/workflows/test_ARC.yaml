@@ -1,0 +1,147 @@
+name: Test matrix generation based on the dockerfiles using ARC Runners
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version'
+        required: false
+        default: 'auto'
+
+jobs:
+  check-branch:
+    runs-on: arc-runner-set
+    outputs:
+      is_main: ${{ steps.check_main.outputs.is_main }}
+    steps:
+      - name: Check if branch is main
+        id: check_main
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "is_main=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_main=false" >> $GITHUB_OUTPUT
+          fi
+
+  generate-matrix:
+    needs: check-branch
+    if: needs.check-branch.outputs.is_main == 'true'
+    runs-on: arc-runner-set
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Generate matrix
+        id: set-matrix
+        run: |
+          MATRIX=$(find . -name "*-dockerfile" | while read DOCKERFILE; do
+            if [[ $DOCKERFILE == *"base-images"* ]] || [[ $DOCKERFILE == *"ci-images"* ]]; then
+              IMAGE_TYPE=$(echo $DOCKERFILE | cut -d'/' -f2 | sed 's/-images//')
+              OS_TYPE=$(echo $DOCKERFILE | cut -d'/' -f3)
+              FILENAME=$(basename $DOCKERFILE)
+              OS_VERSION=$(echo $FILENAME | grep -o '[0-9]\+')
+              REGISTRY_PATH="${IMAGE_TYPE}/${OS_TYPE}/${OS_VERSION}"
+              #DOCKERFILE="${DOCKERFILE#./}"
+              
+              echo "{\"image_type\":\"$IMAGE_TYPE\",\"os_type\":\"$OS_TYPE\",\"os_version\":\"$OS_VERSION\",\"registry_path\":\"$REGISTRY_PATH\",\"dockerfile\":\"$DOCKERFILE\"}"
+            fi
+          done | jq -s '{ "include": . }' | jq -c .)
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          echo "matrix=$MATRIX" 
+
+  create-release:
+      needs: [check-branch, generate-matrix]
+      if: needs.check-branch.outputs.is_main == 'true'
+      runs-on: arc-runner-set
+      outputs:
+        new_version: ${{ steps.generate_version.outputs.NEW_VERSION}}
+      permissions:
+        contents: write
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v3
+          with:
+            fetch-depth: 0
+
+        - name: Get latest tag
+          id: get_latest_tag
+          run: |
+            latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            echo "LATEST_TAG=$latest_tag"
+            echo "LATEST_TAG=$latest_tag" >> $GITHUB_OUTPUT
+
+        - name: Generate new version
+          id: generate_version
+          run: |
+            if [ '${{ github.event.inputs.version }}' != 'auto' ]; then
+              new_version='${{ github.event.inputs.version }}'
+            else
+              latest_version=${LATEST_TAG#v}
+              IFS='.' read -ra version_parts <<< "$latest_version"
+              new_patch=$((version_parts[2] + 1))
+              new_version="${version_parts[0]}.${version_parts[1]}.$new_patch"
+            fi
+            echo "NEW_VERSION=v$new_version"
+            echo "NEW_VERSION=v$new_version" >> $GITHUB_OUTPUT
+          env:
+            LATEST_TAG: ${{ steps.get_latest_tag.outputs.LATEST_TAG }}
+
+        - name: Create Release
+          id: create_release
+          uses: comnoco/create-release-action@v2.0.5
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            tag_name: ${{ steps.generate_version.outputs.NEW_VERSION }}
+            release_name: Release ${{ steps.generate_version.outputs.NEW_VERSION }}
+            body: "Weekly rolling release"
+            draft: false
+            prerelease: false
+
+  build-and-push:
+    needs: [check-branch, generate-matrix, create-release]
+    if: needs.check-branch.outputs.is_main == 'true'
+    runs-on: arc-runner-set
+    strategy:
+      matrix: ${{fromJson(needs.generate-matrix.outputs.matrix)}}
+      fail-fast: false
+    steps:
+        - name: Build Docker image
+          run: |
+            echo "Building Docker image: ${NEW_VERSION}"
+            echo "Dockerfile: ${DOCKERFILE}"
+          env:
+            NEW_VERSION: ${{ needs.create-release.outputs.new_version }}
+            DOCKERFILE: ${{ matrix.dockerfile }}
+
+        - uses: actions/checkout@v3
+        
+        - name: lint-dockerfile
+          uses: hadolint/hadolint-action@v3.1.0
+          with:
+            Dockerfile: ${{ env.DOCKERFILE }} 
+            failure-threshold: warning
+            no-fail: true
+            override-info: DL3008,DL3009,DL3015,DL3059
+            override-warning: DL3003,DL3045
+            format: json
+            output-file: hadolint-${{ env.OS_TYPE }}-${{ github.sha }}.json
+          env:
+            NEW_VERSION: ${{ needs.create-release.outputs.new_version }}
+            DOCKERFILE: ${{ matrix.dockerfile }}
+            OS_TYPE: ${{ matrix.os_type }}
+
+    #   - name: Build and push Docker image
+    #     uses: docker/build-push-action@v4
+    #     with:
+    #       push: true
+    #       tags: |
+    #         your-registry/your-image:${{ steps.generate_version.outputs.NEW_VERSION }}
+    #         your-registry/your-image:latest
+
+        - name: Deploy
+          run: |
+            # Add your deployment steps here
+            echo "Deploying version ${NEW_VERSION#v}"
+          env:
+            NEW_VERSION: ${{ needs.create-release.outputs.new_version }}
